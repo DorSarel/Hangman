@@ -26,8 +26,9 @@ public:
 	void printCachedWord() const;
 	bool fillCachedWord(char ch);
 	bool isEqual() const;
-
 	void convertTolower(char* word);
+
+	void resetWord() { initCachedWord(); }
 };
 
 #endif // __WORD_H

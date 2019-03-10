@@ -18,8 +18,6 @@ Word::Word(char* word)
 	cachedWord_[size_] = '\0';
 
 	convertTolower(word_);
-	initCachedWord();
-
 	initLettersArr();
 
 	cout << "Created new word object: " << word_ << endl;

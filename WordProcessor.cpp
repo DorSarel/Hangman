@@ -24,5 +24,7 @@ unsigned WordProcessor::generateRandomNumber() const
 
 Word* WordProcessor::generateRandomWord() const
 {
-	return words_[generateRandomNumber()];
+	Word* w = words_[generateRandomNumber()];
+	w->resetWord();
+	return w;
 }

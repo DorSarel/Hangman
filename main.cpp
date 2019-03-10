@@ -5,10 +5,12 @@
 using namespace std;
 
 const unsigned char MAX_SIZE = 255;
-const unsigned char MAX_ATTEMPTS = 5;
+const unsigned char MAX_ATTEMPTS = 8;
 
 void readWords(WordProcessor& wp);
-void startGame(const WordProcessor& wp);
+bool startGame(const WordProcessor& wp, Word**);
+bool play(Word* word);
+int getGameState(bool isWon);
 
 int main()
 {
@@ -21,23 +23,34 @@ int main()
 	WordProcessor wp(nOfWords);
 	readWords(wp);
 
-	cout << "Lets start playing!!!" << endl;
+	cout << "Let`s start playing!!!" << endl;
 
-	int choice;
+	int choice = 1;
+	Word* wordInUse = nullptr;
+	bool isWon = false;
+
 	do
 	{
-		startGame(wp);
-		cout << "Do you want another round? (1=yes, 0=no) " << endl;
-		cin >> choice;
-
-		if (choice == 0)
+		switch (choice)
 		{
+		case 0:
 			cout << "Bye Bye" << endl;
 			exit(1);
+			break;
+
+		case 1:
+			 isWon = startGame(wp, &wordInUse);
+			 break;
+
+		case 2:
+			wordInUse->resetWord();
+			isWon = play(wordInUse);
+			break;
 		}
 
+		choice = getGameState(isWon);
 		system("cls");
-	} while (choice != 0);
+	} while (true);
 
 	return 0;
 }
@@ -58,19 +71,26 @@ void readWords(WordProcessor& wp)
 	system("cls");
 }
 
-void startGame(const WordProcessor& wp)
+bool startGame(const WordProcessor& wp, Word** wordInUse)
+{
+	*wordInUse = wp.generateRandomWord();
+	return play(*wordInUse);
+}
+
+bool play(Word* word)
 {
 	unsigned attempts = 0;
 	char toCheck;
-	Word* currentWord = wp.generateRandomWord();
-	currentWord->printCachedWord();
+	bool isWon = false;
 
-	while (!currentWord->isEqual() && attempts < MAX_ATTEMPTS)
+	word->printCachedWord();
+
+	while (!word->isEqual() && attempts < MAX_ATTEMPTS)
 	{
 		cout << "Insert char [" << attempts + 1 << " / " << (int)MAX_ATTEMPTS << "]: ";
 		cin >> toCheck;
 
-		if (!currentWord->fillCachedWord(toCheck))
+		if (!word->fillCachedWord(toCheck))
 		{
 			++attempts;
 			cout << "Oops... Wrong choice..." << endl;
@@ -79,8 +99,28 @@ void startGame(const WordProcessor& wp)
 			cout << "Great! Keep going :)" << endl;
 	}
 
-	if (currentWord->isEqual() && attempts < MAX_ATTEMPTS)
-		cout << "Congratulations !!! You discovered the word \"" << currentWord->getWord() << "\" successfuly" << endl;
+	if (word->isEqual() && attempts < MAX_ATTEMPTS)
+	{
+		cout << "Congratulations !!! You discovered the word \"" << word->getWord() << "\" successfuly" << endl;
+		isWon = true;
+	}
 	else
 		cout << "You lost..." << endl;
+
+	return isWon;
+}
+
+int getGameState(bool isWon)
+{
+	int choice;
+	if (isWon)
+	{
+		cout << "Do you want another round? (1=yes, 0=no) " << endl;
+	}
+	else
+	{
+		cout << "Do you want a new word (1)?, the same word (2)? or finish (0)? ";
+	}
+	cin >> choice;
+	return choice;
 }
