@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include "GameBoard.h"
 #include "WordProcessor.h"
 #include "Word.h"
 using namespace std;
@@ -8,9 +9,16 @@ const unsigned char MAX_SIZE = 255;
 const unsigned char MAX_ATTEMPTS = 8;
 
 void readWords(WordProcessor& wp);
-bool startGame(const WordProcessor& wp, Word**);
+void startGame(const WordProcessor& wp);
+bool playNewWord(const WordProcessor& wp, Word** wordInUse);
+bool playAgain(Word* word);
 bool play(Word* word);
 int getGameState(bool isWon);
+void winningMsg(Word* word);
+bool losingMsg(Word* word);
+
+// Globals
+GameBoard gb;
 
 int main()
 {
@@ -25,32 +33,7 @@ int main()
 
 	cout << "Let`s start playing!!!" << endl;
 
-	int choice = 1;
-	Word* wordInUse = nullptr;
-	bool isWon = false;
-
-	do
-	{
-		switch (choice)
-		{
-		case 0:
-			cout << "Bye Bye" << endl;
-			exit(1);
-			break;
-
-		case 1:
-			 isWon = startGame(wp, &wordInUse);
-			 break;
-
-		case 2:
-			wordInUse->resetWord();
-			isWon = play(wordInUse);
-			break;
-		}
-
-		choice = getGameState(isWon);
-		system("cls");
-	} while (true);
+	startGame(wp);
 
 	return 0;
 }
@@ -71,10 +54,46 @@ void readWords(WordProcessor& wp)
 	system("cls");
 }
 
-bool startGame(const WordProcessor& wp, Word** wordInUse)
+void startGame(const WordProcessor& wp)
+{
+	int choice = 1; // for first round
+	Word* wordInUse = nullptr;
+	bool isWon = false;
+
+	do
+	{
+		switch (choice)
+		{
+		case 0:
+			cout << "Bye Bye" << endl;
+			gb.printStatistic();
+			exit(1);
+			break;
+
+		case 1:
+			isWon = playNewWord(wp, &wordInUse);
+			break;
+
+		case 2:
+			isWon = playAgain(wordInUse);
+			break;
+		}
+
+		choice = getGameState(isWon);
+		system("cls");
+	} while (true);
+}
+
+bool playNewWord(const WordProcessor& wp, Word** wordInUse)
 {
 	*wordInUse = wp.generateRandomWord();
 	return play(*wordInUse);
+}
+
+bool playAgain(Word* word)
+{
+	word->resetWord();
+	return play(word);
 }
 
 bool play(Word* word)
@@ -101,13 +120,42 @@ bool play(Word* word)
 
 	if (word->isEqual() && attempts < MAX_ATTEMPTS)
 	{
-		cout << "Congratulations !!! You discovered the word \"" << word->getWord() << "\" successfuly" << endl;
+		winningMsg(word);
 		isWon = true;
 	}
 	else
-		cout << "You lost..." << endl;
+	{
+		isWon = losingMsg(word);
+	}
 
 	return isWon;
+}
+
+void winningMsg(Word* word)
+{
+	cout << "Congratulations !!! You discovered the word \"" << word->getWord() << "\" successfuly" << endl;
+	gb.incrementScore();
+}
+
+bool losingMsg(Word* word)
+{
+	cout << "You lost..." << endl;
+	gb.decrementScore();
+
+	if (gb.getScore() > 0)
+	{
+		cout << "Do you want another " << MAX_ATTEMPTS << " attempts for 5 points? ";
+		int choice;
+		cin >> choice;
+
+		if (choice)
+		{
+			gb.decrementScore(5);
+			return play(word);
+		}
+	}
+
+	return false;
 }
 
 int getGameState(bool isWon)
