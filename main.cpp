@@ -1,5 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
+#include <cstdlib>
+#include "Category.h"
 #include "GameBoard.h"
 #include "WordProcessor.h"
 #include "Word.h"
@@ -8,14 +10,16 @@ using namespace std;
 const unsigned char MAX_SIZE = 255;
 const unsigned char MAX_ATTEMPTS = 8;
 
-void readWords(WordProcessor& wp);
-void startGame(const WordProcessor& wp);
-bool playNewWord(const WordProcessor& wp, Word** wordInUse);
+void startGame(Category**, unsigned nOfCategories);
+bool playNewWord(const WordProcessor* wp, Word** wordInUse);
 bool playAgain(Word* word);
 bool play(Word* word);
 int getGameState(bool isWon);
 void winningMsg(Word* word);
 bool losingMsg(Word* word);
+void readWords(WordProcessor* wp);
+void readCategories(Category**, unsigned nOfCategories);
+Category* generateCategory(Category**, unsigned nOfCategories);
 
 // Globals
 GameBoard gb;
@@ -24,29 +28,57 @@ int main()
 {
 
 	cout << "Welcome to my Hangman Game!!!" << endl;
-	cout << "In order to start - please enter number of words to be inserted: ";
-	unsigned nOfWords;
-	cin >> nOfWords;
+	cout << "In order to start - Please enter number of catgories you want to enter: ";
+	unsigned nOfCategories;
+	cin >> nOfCategories;
 
-	WordProcessor wp(nOfWords);
-	readWords(wp);
+	Category** categories = new Category*[nOfCategories];
+	readCategories(categories, nOfCategories);
+
+	cout << "Categories has been created. Start adding words..." << endl;
+
+	for (unsigned idx = 0; idx < nOfCategories; ++idx)
+	{
+		cout << "Enter words for " << categories[idx]->getSubject() << " category" << endl;
+		readWords(categories[idx]->getWordProcessor());
+		cout << endl;
+	}
 
 	cout << "Let`s start playing!!!" << endl;
+	startGame(categories, nOfCategories);
 
-	startGame(wp);
-
+	delete[]categories;
 	return 0;
 }
 
-void readWords(WordProcessor& wp)
+void readCategories(Category** categories, unsigned nOfCategories)
+{
+	char subject[MAX_SIZE];
+	unsigned nOfWords;
+	for (unsigned idx = 0; idx < nOfCategories; ++idx)
+	{
+		cout << "Enter the category name: ";
+		cin.getline(subject, MAX_SIZE);
+		cin.getline(subject, MAX_SIZE);
+
+		cout << "Enter number of words for the category: ";
+		cin >> nOfWords;
+
+		categories[idx] = new Category(subject, nOfWords);
+		cin.getline(subject, MAX_SIZE); // flush
+		cout << endl;
+	}
+}
+
+void readWords(WordProcessor* wp)
 {
 	char temp[MAX_SIZE];
-	Word** arr = wp.getWordsArr();
+	Word** arr = wp->getWordsArr();
 
 	cin.getline(temp, MAX_SIZE); //handle buffer
-	for (unsigned idx = 0; idx < wp.getLength(); ++idx)
+	for (unsigned idx = 0; idx < wp->getLength(); ++idx)
 	{
-		cout << "Enter word [" << idx + 1 << " / " << wp.getLength() << "]: ";
+		cout << "Enter word [" << idx + 1 << " / " << wp->getLength() << "]: ";
 		cin.getline(temp, MAX_SIZE);
 
 		arr[idx] = new Word(temp);
@@ -54,14 +86,21 @@ void readWords(WordProcessor& wp)
 	system("cls");
 }
 
-void startGame(const WordProcessor& wp)
+Category* generateCategory(Category** categories, unsigned nOfCategories)
 {
-	int choice = 1; // for first round
+	return categories[rand() % nOfCategories];
+}
+
+void startGame(Category** categories, unsigned nOfCategories)
+{
 	Word* wordInUse = nullptr;
+	Category* currentCategory = nullptr;
+	int choice = 1; // for first round
 	bool isWon = false;
 
 	do
 	{
+		currentCategory = generateCategory(categories, nOfCategories);
 		switch (choice)
 		{
 		case 0:
@@ -71,7 +110,7 @@ void startGame(const WordProcessor& wp)
 			break;
 
 		case 1:
-			isWon = playNewWord(wp, &wordInUse);
+			isWon = playNewWord(currentCategory->getWordProcessor(), &wordInUse);
 			break;
 
 		case 2:
@@ -84,9 +123,9 @@ void startGame(const WordProcessor& wp)
 	} while (true);
 }
 
-bool playNewWord(const WordProcessor& wp, Word** wordInUse)
+bool playNewWord(const WordProcessor* wp, Word** wordInUse)
 {
-	*wordInUse = wp.generateRandomWord();
+	*wordInUse = wp->generateRandomWord();
 	return play(*wordInUse);
 }
 

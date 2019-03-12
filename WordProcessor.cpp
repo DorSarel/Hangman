@@ -6,7 +6,6 @@ WordProcessor::WordProcessor(unsigned length)
 {
 	length_ = length;
 	words_ = new Word*[length_];
-	//srand((unsigned)time(0));
 }
 
 
